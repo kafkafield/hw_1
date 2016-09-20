@@ -78,9 +78,12 @@ void Rotate (DWORD *pDst, long DPitch, DWORD *pSrc, long SPitch, long width, lon
 	DPitch /= sizeof(DWORD);
 	SPitch /= sizeof(DWORD);
 
-	for (int y=-height/2; y<height/2; y++) //++y
+	int halfHeight = height / 2;
+	int halfWidth = width / 2;
+
+	for (int y = -halfHeight; y<halfHeight; ++y) //++y
 	{
-		for (int x=-width/2; x<width/2; x++)
+		for (int x = -halfWidth; x<halfWidth; ++x)
 		{
 			//float co = cos(angle);
 			//float si = sin(angle);
@@ -88,8 +91,16 @@ void Rotate (DWORD *pDst, long DPitch, DWORD *pSrc, long SPitch, long width, lon
 			//float fSrcY = (float)(height / 2.0 + x*si + y*co);
 			float co = sin_simple(angle, 'c');
 			float si = sin_simple(angle, 's');
-			float fSrcX = (float)(width / 2.0 + x*co - y*si);
-			float fSrcY = (float)(height / 2.0 + x*si + y*co);
+
+			//float fSrcX = (float)(width / 2.0 + x*co - y*si);
+			//float fSrcY = (float)(height / 2.0 + x*si + y*co);
+
+			float ub = x + y;
+			float uc = y - x;
+			float vc = co + si;
+			float uavc = x * vc;
+			float fSrcX = uc * co + uavc + halfWidth;
+			float fSrcY = uavc - ub * si + halfHeight;
 
 			long dwSrcX = (long)fSrcX;
 			long dwSrcY = (long)fSrcY;
@@ -149,10 +160,10 @@ void Rotate (DWORD *pDst, long DPitch, DWORD *pSrc, long SPitch, long width, lon
 							   BottomRightBlue	* fx * fy;                 
 				DWORD  blue_value = (DWORD)(blueFP + 0.5);
 
-				pDst[x+width/2] = (alpha_value << 24) + (red_value << 16) + 
+				pDst[x+halfWidth] = (alpha_value << 24) + (red_value << 16) + 
 								  (green_value << 8)  + (blue_value);
 			} else {
-				pDst[x+width/2] = 0;
+				pDst[x + halfWidth] = 0;
 			}
 		}
 		pDst += DPitch;
