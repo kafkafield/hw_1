@@ -21,6 +21,8 @@ float Angle = 0.0f, AngleDir = -0.04f;
 #define PI2 6.283185
 #define PIm2 1.570796
 
+float sinRes[63];
+
 //---------------------------------------------------------------------------
 void UpdatePositionAndRotation (void)
 {
@@ -46,7 +48,7 @@ void UpdatePositionAndRotation (void)
 	}
 }
 
-inline float sin_simple(float a, char c)
+inline float sin_table(float a, char c)
 {
 	if (c == 'c')
 		a += PIm2;
@@ -56,19 +58,14 @@ inline float sin_simple(float a, char c)
 	{
 		if (a >= -0.6f)
 			return a;
-		else
-		{
-			return 1.27323954 * a + 0.405284735 * a * a;
-		}
+		else return -sinRes[(int)((-a - 0.64) / 0.04)];
+		
 	}
 	else
 	{
 		if (a <= 0.6f)
 			return a;
-		else
-		{
-			return 1.27323954 * a - 0.405284735 * a * a;
-		}
+		else return sinRes[(int)((a - 0.64) / 0.04)];
 	}
 }
 
@@ -82,12 +79,8 @@ void Rotate (DWORD *pDst, long DPitch, DWORD *pSrc, long SPitch, long width, lon
 	{
 		for (int x=-width/2; x<width/2; x++)
 		{
-			//float co = cos(angle);
-			//float si = sin(angle);
-			//float fSrcX = (float)(width / 2.0 + x*co - y*si);
-			//float fSrcY = (float)(height / 2.0 + x*si + y*co);
-			float co = sin_simple(angle, 'c');
-			float si = sin_simple(angle, 's');
+			float co = sin_table(angle, 'c');
+			float si = sin_table(angle, 's');
 			float fSrcX = (float)(width / 2.0 + x*co - y*si);
 			float fSrcY = (float)(height / 2.0 + x*si + y*co);
 
@@ -211,6 +204,16 @@ void MemCopyRect(BYTE *pDst, long dPitch, BYTE *pSrc, long sPitch,
 	}
 }
 
+void initSinRes()
+{
+	float begin = 0.64f;
+	for (int i = 0; i < 63; ++i)
+	{
+		sinRes[i] = sin(begin);
+		begin -= AngleDir;
+	}
+}
+
 // ------------------------------------------------------------------------
 int AppInit (HWND hWnd)
 {
@@ -255,6 +258,7 @@ int AppInit (HWND hWnd)
 
 	RetVal = dd_Init(hWnd, BkgBmpWidth, BkgBmpHeight);
 
+	initSinRes();
 
 	return RetVal;
 }
