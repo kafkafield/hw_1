@@ -17,10 +17,19 @@ POINT FgDir = {+2, 0};
 DWORD *pRotatedImage = NULL;	// same size as foreground
 float Angle = 0.0f, AngleDir = -0.04f;
 
+#define PI 3.1415926
+#define PI2 6.283185
+#define PIm2 1.570796
+
 //---------------------------------------------------------------------------
 void UpdatePositionAndRotation (void)
 {
 	Angle += AngleDir;
+
+	if (Angle > PI)
+		Angle -= PI2;
+	if (Angle < -PI)
+		Angle += PI2;
 
 	FgPos.x += FgDir.x;
 
@@ -37,6 +46,31 @@ void UpdatePositionAndRotation (void)
 	}
 }
 
+inline float sin_simple(float a, char c)
+{
+	if (c == 'c')
+		a += PIm2;
+	if (a > PI)
+		a -= PI2;
+	if (a < 0)
+	{
+		if (a >= -0.6f)
+			return a;
+		else
+		{
+			return 1.27323954 * a + 0.405284735 * a * a;
+		}
+	}
+	else
+	{
+		if (a <= 0.6f)
+			return a;
+		else
+		{
+			return 1.27323954 * a - 0.405284735 * a * a;
+		}
+	}
+}
 
 // --------------------------------------------------------------------------
 void Rotate (DWORD *pDst, long DPitch, DWORD *pSrc, long SPitch, long width, long  height, float angle)
@@ -44,12 +78,18 @@ void Rotate (DWORD *pDst, long DPitch, DWORD *pSrc, long SPitch, long width, lon
 	DPitch /= sizeof(DWORD);
 	SPitch /= sizeof(DWORD);
 
-	for (int y=-height/2; y<height/2; y++)
+	for (int y=-height/2; y<height/2; y++) //++y
 	{
 		for (int x=-width/2; x<width/2; x++)
 		{
-			float fSrcX = (float)(width /2.0 + x*cos(angle) - y*sin(angle));
-			float fSrcY = (float)(height/2.0 + x*sin(angle) + y*cos(angle));
+			//float co = cos(angle);
+			//float si = sin(angle);
+			//float fSrcX = (float)(width / 2.0 + x*co - y*si);
+			//float fSrcY = (float)(height / 2.0 + x*si + y*co);
+			float co = sin_simple(angle, 'c');
+			float si = sin_simple(angle, 's');
+			float fSrcX = (float)(width / 2.0 + x*co - y*si);
+			float fSrcY = (float)(height / 2.0 + x*si + y*co);
 
 			long dwSrcX = (long)fSrcX;
 			long dwSrcY = (long)fSrcY;
