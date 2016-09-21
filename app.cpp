@@ -78,8 +78,8 @@ void Rotate (DWORD *pDst, long DPitch, DWORD *pSrc, long SPitch, long width, lon
 	DPitch /= sizeof(DWORD);
 	SPitch /= sizeof(DWORD);
 
-	int halfHeight = height / 2;
-	int halfWidth = width / 2;
+	int halfHeight = height >> 1;
+	int halfWidth = width >> 1;
 
 	for (int y = -halfHeight; y<halfHeight; ++y) //++y
 	{
@@ -116,52 +116,72 @@ void Rotate (DWORD *pDst, long DPitch, DWORD *pSrc, long SPitch, long width, lon
 				float fx = fSrcX - dwSrcX;
 				float fy = fSrcY - dwSrcY;
 
+				float fxfy = fx * fy;
+				//byte c1 = (1 - fx - fy + fxfy) ;
+				//byte c2 = fx - fxfy;
+				//byte c3 = fy - fxfy;
+				float c1 = (1 - fx - fy + fxfy);
+				float c2 = fx - fxfy;
+				float c3 = fy - fxfy;
+
 				// alpha interpolation
-				DWORD TopLeftAlpha     = (*pTopLeft)    >> 24;
-				DWORD TopRightAlpha    = (*pTopRight)   >> 24;
-				DWORD BottomLeftAlpha  = (*pBottomLeft) >> 24;
-				DWORD BottomRightAlpha = (*pBottomRight)>> 24;
-				float alphaFP = TopLeftAlpha	* (1.0f-fx) * (1.0f-fy) +
-								TopRightAlpha	* fx * (1.0f-fy) +
-								BottomLeftAlpha	* (1.0f-fx) * fy +
-								BottomRightAlpha* fx * fy;
-				DWORD  alpha_value = (DWORD)(alphaFP + 0.5);
+				byte TopLeftAlpha     = (*pTopLeft)    >> 24;
+				byte TopRightAlpha    = (*pTopRight)   >> 24;
+				byte BottomLeftAlpha  = (*pBottomLeft) >> 24;
+				byte BottomRightAlpha = (*pBottomRight)>> 24;
+				byte alpha_value = TopLeftAlpha	* c1 +
+					//float alphaFP = TopLeftAlpha	* c1 +
+					TopRightAlpha	* c2 +
+					BottomLeftAlpha	* c3 +
+					BottomRightAlpha* fxfy +0.5;
+				//DWORD  alpha_value = (DWORD)(alphaFP + 0.5);
+				//DWORD  alpha_value = alphaFP;
 
 				// red interpolation
-				DWORD TopLeftRed     = ((*pTopLeft)    >> 16) & 0xff;
-				DWORD TopRightRed    = ((*pTopRight)   >> 16) & 0xff;
-				DWORD BottomLeftRed  = ((*pBottomLeft) >> 16) & 0xff;
-				DWORD BottomRightRed = ((*pBottomRight)>> 16) & 0xff;
-				float redFP =	TopLeftRed		* (1.0f-fx) * (1.0f-fy) +
-								TopRightRed		* fx * (1.0f-fy) +
-								BottomLeftRed	* (1.0f-fx) * fy +
-								BottomRightRed	* fx * fy;
-				DWORD  red_value = (DWORD)(redFP + 0.5);
+				byte TopLeftRed     = ((*pTopLeft)    >> 16) & 0xff;
+				byte TopRightRed    = ((*pTopRight)   >> 16) & 0xff;
+				byte BottomLeftRed  = ((*pBottomLeft) >> 16) & 0xff;
+				byte BottomRightRed = ((*pBottomRight)>> 16) & 0xff;
+				byte red_value = TopLeftRed		* c1 +
+					//float redFP = TopLeftRed		* c1 +
+					TopRightRed		* c2 +
+					BottomLeftRed	* c3 +
+					BottomRightRed	* fxfy +0.5;
+				//DWORD  red_value = (DWORD)(redFP + 0.5);
 				
 				// green interpolation
-				DWORD TopLeftGreen     = ((*pTopLeft)    >> 8) & 0xff;
-				DWORD TopRightGreen    = ((*pTopRight)   >> 8) & 0xff;
-				DWORD BottomLeftGreen  = ((*pBottomLeft) >> 8) & 0xff;
-				DWORD BottomRightGreen = ((*pBottomRight)>> 8) & 0xff;
-				float greenFP = TopLeftGreen	  * (1.0f-fx) * (1.0f-fy) +  
-								 TopRightGreen	  * fx * (1.0f-fy) +         
-								 BottomLeftGreen  * (1.0f-fx) * fy +         
-								 BottomRightGreen * fx * fy;                 
-				DWORD  green_value = (DWORD)(greenFP + 0.5);
+				byte TopLeftGreen     = ((*pTopLeft)    >> 8) & 0xff;
+				byte TopRightGreen    = ((*pTopRight)   >> 8) & 0xff;
+				byte BottomLeftGreen  = ((*pBottomLeft) >> 8) & 0xff;
+				byte BottomRightGreen = ((*pBottomRight)>> 8) & 0xff;
+				byte green_value = TopLeftGreen	  * c1 +
+					//float greenFP = TopLeftGreen	  * c1 +
+					TopRightGreen	  * c2 +
+					BottomLeftGreen  * c3 +
+					BottomRightGreen * fxfy +0.5;
+				//DWORD  green_value = (DWORD)(greenFP + 0.5);
+				//DWORD  green_value = greenFP;
 
 				// blue interpolation
-				DWORD TopLeftBlue     = *pTopLeft & 0xff;
-				DWORD TopRightBlue    = *pTopRight & 0xff;
-				DWORD BottomLeftBlue  = *pBottomLeft & 0xff;
-				DWORD BottomRightBlue = *pBottomRight & 0xff;
-				float blueFP = TopLeftBlue		* (1.0f-fx) * (1.0f-fy) +  
-							   TopRightBlue		* fx * (1.0f-fy) +         
-							   BottomLeftBlue	* (1.0f-fx) * fy +         
-							   BottomRightBlue	* fx * fy;                 
-				DWORD  blue_value = (DWORD)(blueFP + 0.5);
+				byte TopLeftBlue     = *pTopLeft & 0xff;
+				byte TopRightBlue    = *pTopRight & 0xff;
+				byte BottomLeftBlue  = *pBottomLeft & 0xff;
+				byte BottomRightBlue = *pBottomRight & 0xff;
+				byte blue_value = TopLeftBlue		* c1 +
+					//float blueFP = TopLeftBlue		* c1 +
+					TopRightBlue	* c2 +
+					BottomLeftBlue	* c3 +
+					BottomRightBlue	* fxfy +0.5;
+				//DWORD  blue_value = (DWORD)(blueFP + 0.5);
+				//DWORD  blue_value = blueFP;
 
-				pDst[x+halfWidth] = (alpha_value << 24) + (red_value << 16) + 
-								  (green_value << 8)  + (blue_value);
+				pDst[x+halfWidth] = (alpha_value << 24) | (red_value << 16) | 
+								  (green_value << 8)  | (blue_value);
+				//byte * temp = (byte*)&pDst[x + halfWidth];
+				//*(temp + 3) = alpha_value;
+				//*(temp + 2) = red_value;
+				//*(temp + 1) = green_value;
+				//*(temp + 0) = blue_value;
 			} else {
 				pDst[x + halfWidth] = 0;
 			}
